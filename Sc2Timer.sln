@@ -1,0 +1,34 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sc2Timer.Core", "src\Sc2Timer.Core\Sc2Timer.Core.csproj", "{A06AF7CE-027B-43FE-85A3-B0B942C31322}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sc2Timer.App", "src\Sc2Timer.App\Sc2Timer.App.csproj", "{D9032F87-1C2A-45A1-A063-F1BB8D3C6B0D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sc2Timer.Core.Tests", "tests\Sc2Timer.Core.Tests\Sc2Timer.Core.Tests.csproj", "{355B9146-2852-48B2-B6A9-04B1A90DCCEA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A06AF7CE-027B-43FE-85A3-B0B942C31322}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A06AF7CE-027B-43FE-85A3-B0B942C31322}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A06AF7CE-027B-43FE-85A3-B0B942C31322}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A06AF7CE-027B-43FE-85A3-B0B942C31322}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9032F87-1C2A-45A1-A063-F1BB8D3C6B0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9032F87-1C2A-45A1-A063-F1BB8D3C6B0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9032F87-1C2A-45A1-A063-F1BB8D3C6B0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9032F87-1C2A-45A1-A063-F1BB8D3C6B0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{355B9146-2852-48B2-B6A9-04B1A90DCCEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{355B9146-2852-48B2-B6A9-04B1A90DCCEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{355B9146-2852-48B2-B6A9-04B1A90DCCEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{355B9146-2852-48B2-B6A9-04B1A90DCCEA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

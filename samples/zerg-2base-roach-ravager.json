@@ -1,0 +1,24 @@
+{
+  "name": "Zerg 2-Base Roach/Ravager",
+  "matchup": "ZvT",
+  "defaultWarningSeconds": 10,
+  "events": [
+    { "time": "00:17", "text": "First overlord" },
+    { "time": "01:00", "text": "Extractor" },
+    { "time": "01:15", "text": "Spawning pool" },
+    { "time": "02:00", "text": "Second hatchery" },
+    { "time": "02:20", "text": "Roach warren" },
+    { "time": "03:00", "text": "Lair" },
+    { "time": "03:45", "text": "Start plus one ranged carapace" },
+    { "time": "04:30", "text": "Third hatchery" },
+    { "time": "05:00", "text": "Ravager tech, prepare to attack" },
+    {
+      "recurring": true,
+      "text": "Inject",
+      "startTime": "02:00",
+      "intervalSeconds": 29,
+      "endTime": "12:00",
+      "warningSeconds": 0
+    }
+  ]
+}
