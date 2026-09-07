@@ -1,0 +1,640 @@
+<title>Zerg Build Timer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --bg: #0b0a10;
+    --panel: #16131d;
+    --panel-raised: #1d1826;
+    --border: #2c2536;
+    --text: #ede8f2;
+    --text-dim: #8d84a0;
+    --accent: #b8ff4d;
+    --accent-dim: #6f8f3a;
+    --warn: #ff7a45;
+    --danger: #ff5470;
+    --font-display: "Rajdhani", "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", "Consolas", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+
+  .hud {
+    width: 100%;
+    max-width: 400px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.7);
+  }
+
+  .hud-header {
+    padding: 20px 24px 0;
+    text-align: center;
+  }
+
+  .wordmark {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.32em;
+    color: var(--accent);
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+
+  .build-name {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 500;
+    min-height: 18px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .clock {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 76px;
+    font-weight: 700;
+    text-align: center;
+    padding: 6px 0 2px;
+    letter-spacing: 0.02em;
+  }
+
+  .clock-state {
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 18px;
+  }
+
+  .clock-state.is-running { color: var(--accent); }
+  .clock-state.is-paused { color: var(--warn); }
+
+  .next {
+    margin: 0 20px 18px;
+    padding: 16px 18px;
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-align: center;
+    position: relative;
+  }
+
+  .next-heading {
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .next-label {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-top: 4px;
+    text-wrap: balance;
+    transition: color 0.2s ease;
+  }
+
+  .next-label.is-imminent { color: var(--warn); }
+
+  .next-countdown {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  @keyframes pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(184, 255, 77, 0); }
+    50% { box-shadow: 0 0 0 4px rgba(184, 255, 77, 0.12); }
+  }
+
+  .next.is-imminent {
+    animation: pulse-ring 1s ease-in-out infinite;
+    border-color: var(--warn);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .next.is-imminent { animation: none; }
+  }
+
+  .timeline-wrap {
+    margin: 0 20px 16px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+
+  .timeline-heading {
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    padding: 0 2px 8px;
+  }
+
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .timeline::-webkit-scrollbar { width: 6px; }
+  .timeline::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .timeline li {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 6px 2px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(44, 37, 54, 0.5);
+  }
+
+  .timeline li:last-child { border-bottom: none; }
+
+  .timeline .t-time {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    width: 48px;
+  }
+
+  .timeline .t-label { flex: 1; }
+
+  .timeline li.completed {
+    color: var(--text-dim);
+    text-decoration: line-through;
+    text-decoration-color: var(--border);
+  }
+
+  .timeline li.completed .t-time { color: var(--border); }
+
+  .timeline li.next-up .t-label { color: var(--accent); font-weight: 600; }
+  .timeline li.next-up .t-time { color: var(--accent); }
+
+  .transport {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+  }
+
+  .transport button, .transport label {
+    background: var(--panel-raised);
+    color: var(--text);
+    border: none;
+    padding: 14px 4px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .transport button:hover:not(:disabled), .transport label:hover { background: #241d30; }
+  .transport button:disabled { color: var(--border); cursor: default; }
+  .transport button:focus-visible, .transport label:focus-within {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  #startBtn:not(:disabled) { color: var(--accent); }
+  #pauseBtn:not(:disabled) { color: var(--warn); }
+  #resetBtn:not(:disabled) { color: var(--danger); }
+
+  .settings {
+    padding: 14px 20px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .settings-row span {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+
+  select, input[type="number"] {
+    background: var(--panel-raised);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 5px 8px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    max-width: 190px;
+  }
+
+  input[type="number"] { width: 56px; font-family: var(--font-mono); }
+
+  .status {
+    font-size: 11px;
+    color: var(--text-dim);
+    min-height: 14px;
+  }
+
+  .status.is-error { color: var(--danger); }
+</style>
+
+<div class="hud">
+  <div class="hud-header">
+    <div class="wordmark">Zerg Build Timer</div>
+    <div class="build-name" id="buildName">—</div>
+  </div>
+
+  <div class="clock" id="clock">00:00</div>
+  <div class="clock-state" id="clockState">Stopped</div>
+
+  <div class="next" id="nextCard">
+    <div class="next-heading">Next</div>
+    <div class="next-label" id="nextLabel">—</div>
+    <div class="next-countdown" id="nextCountdown"></div>
+  </div>
+
+  <div class="timeline-wrap">
+    <div class="timeline-heading">Timeline</div>
+    <ul class="timeline" id="timeline"></ul>
+  </div>
+
+  <div class="transport">
+    <label for="importInput">Import
+      <input type="file" id="importInput" accept="application/json,.json" hidden />
+    </label>
+    <button id="startBtn">Start</button>
+    <button id="pauseBtn" disabled>Pause</button>
+    <button id="resetBtn" disabled>Reset</button>
+  </div>
+
+  <div class="settings">
+    <div class="settings-row">
+      <span>Voice</span>
+      <select id="voiceSelect"></select>
+    </div>
+    <div class="settings-row">
+      <span>Default warning lead</span>
+      <input type="number" id="warningInput" min="0" max="60" value="10" /> <span>sec</span>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+</div>
+
+<script>
+  // ---------- Core scheduling logic ----------
+  // (Ported 1:1 from a verified prototype: GameTime parse/format,
+  // TimelineBuilder expansion of recurring events, CueScheduler firing.)
+
+  const GameTime = {
+    parse(text) {
+      const m = /^(\d{1,3}):([0-5]?\d)$/.exec(text.trim());
+      if (!m) throw new Error(`Invalid time "${text}", expected mm:ss.`);
+      return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+    },
+    format(totalSeconds) {
+      const s = Math.max(0, Math.round(totalSeconds));
+      return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+    },
+  };
+
+  const DEFAULT_RECURRING_WINDOW_SECONDS = 20 * 60;
+
+  function buildTimeline(file) {
+    const events = [];
+    for (const dto of file.events || []) {
+      const label = dto.text;
+      if (!label) throw new Error("An event is missing its 'text'.");
+      const warningSeconds = dto.warningSeconds ?? (dto.recurring ? 0 : (file.defaultWarningSeconds ?? 10));
+
+      if (dto.recurring) {
+        if (!dto.startTime) throw new Error(`Recurring event "${label}" is missing 'startTime'.`);
+        if (!dto.intervalSeconds || dto.intervalSeconds <= 0) throw new Error(`Recurring event "${label}" needs a positive 'intervalSeconds'.`);
+        const start = GameTime.parse(dto.startTime);
+        const end = dto.endTime ? GameTime.parse(dto.endTime) : start + DEFAULT_RECURRING_WINDOW_SECONDS;
+        for (let t = start; t <= end; t += dto.intervalSeconds) {
+          events.push(makeEvent(t, label, dto, warningSeconds));
+        }
+      } else {
+        if (!dto.time) throw new Error(`Event "${label}" is missing a 'time'.`);
+        events.push(makeEvent(GameTime.parse(dto.time), label, dto, warningSeconds));
+      }
+    }
+    events.sort((a, b) => a.time - b.time);
+    return events;
+  }
+
+  function makeEvent(time, label, dto, warningSeconds) {
+    return {
+      time,
+      label,
+      speech: label,
+      warningSeconds,
+      warningSpeech: dto.warningText ?? `${Math.round(warningSeconds)} seconds until ${label}`,
+    };
+  }
+
+  class CueScheduler {
+    constructor(events) {
+      this.events = events;
+      this.warningFired = events.map(() => false);
+      this.mainFired = events.map(() => false);
+    }
+    poll(elapsed) {
+      const fired = [];
+      this.events.forEach((ev, i) => {
+        if (!this.warningFired[i] && ev.warningSeconds > 0) {
+          const warnAt = ev.time - ev.warningSeconds;
+          if (warnAt >= 0 && elapsed >= warnAt) {
+            this.warningFired[i] = true;
+            fired.push({ kind: "warning", event: ev, speech: ev.warningSpeech });
+          }
+        }
+        if (!this.mainFired[i] && elapsed >= ev.time) {
+          this.mainFired[i] = true;
+          fired.push({ kind: "main", event: ev, speech: ev.speech });
+        }
+      });
+      return fired;
+    }
+    reset() {
+      this.warningFired.fill(false);
+      this.mainFired.fill(false);
+    }
+    getNextIndex(elapsed) {
+      return this.events.findIndex((e) => e.time > elapsed);
+    }
+  }
+
+  class GameClock {
+    constructor() {
+      this._accumulated = 0;
+      this._runStartedAt = 0;
+      this.state = "stopped";
+    }
+    get elapsed() {
+      return this.state === "running" ? this._accumulated + (performance.now() / 1000 - this._runStartedAt) : this._accumulated;
+    }
+    start() {
+      if (this.state === "running") return;
+      this._runStartedAt = performance.now() / 1000;
+      this.state = "running";
+    }
+    pause() {
+      if (this.state !== "running") return;
+      this._accumulated += performance.now() / 1000 - this._runStartedAt;
+      this.state = "paused";
+    }
+    reset() {
+      this._accumulated = 0;
+      this.state = "stopped";
+    }
+  }
+
+  // ---------- Speech ----------
+
+  let selectedVoice = null;
+  function refreshVoices() {
+    const voices = speechSynthesis.getVoices();
+    const select = document.getElementById("voiceSelect");
+    const previous = select.value;
+    select.innerHTML = "";
+    voices
+      .filter((v) => v.lang.startsWith("en"))
+      .concat(voices.filter((v) => !v.lang.startsWith("en")))
+      .forEach((v, i) => {
+        const opt = document.createElement("option");
+        opt.value = v.name;
+        opt.textContent = `${v.name} (${v.lang})${v.localService ? "" : " · online"}`;
+        select.appendChild(opt);
+      });
+    if (previous && voices.some((v) => v.name === previous)) {
+      select.value = previous;
+    } else {
+      const localEnglish = voices.find((v) => v.lang.startsWith("en") && v.localService);
+      if (localEnglish) select.value = localEnglish.name;
+    }
+    selectedVoice = voices.find((v) => v.name === select.value) || null;
+  }
+  speechSynthesis.addEventListener("voiceschanged", refreshVoices);
+  refreshVoices();
+  document.getElementById("voiceSelect").addEventListener("change", (e) => {
+    selectedVoice = speechSynthesis.getVoices().find((v) => v.name === e.target.value) || null;
+  });
+
+  function speak(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    if (selectedVoice) utterance.voice = selectedVoice;
+    speechSynthesis.speak(utterance);
+  }
+
+  // ---------- App wiring ----------
+
+  const SAMPLE_BUILD = {
+    name: "Zerg 2-Base Roach/Ravager",
+    matchup: "ZvT",
+    defaultWarningSeconds: 10,
+    events: [
+      { time: "00:17", text: "First overlord" },
+      { time: "01:00", text: "Extractor" },
+      { time: "01:15", text: "Spawning pool" },
+      { time: "02:00", text: "Second hatchery" },
+      { time: "02:20", text: "Roach warren" },
+      { time: "03:00", text: "Lair" },
+      { time: "03:45", text: "Start plus one ranged carapace" },
+      { time: "04:30", text: "Third hatchery" },
+      { time: "05:00", text: "Ravager tech, prepare to attack" },
+      { recurring: true, text: "Inject", startTime: "02:00", intervalSeconds: 29, endTime: "12:00", warningSeconds: 0 },
+    ],
+  };
+
+  const el = {
+    buildName: document.getElementById("buildName"),
+    clock: document.getElementById("clock"),
+    clockState: document.getElementById("clockState"),
+    nextCard: document.getElementById("nextCard"),
+    nextLabel: document.getElementById("nextLabel"),
+    nextCountdown: document.getElementById("nextCountdown"),
+    timeline: document.getElementById("timeline"),
+    importInput: document.getElementById("importInput"),
+    startBtn: document.getElementById("startBtn"),
+    pauseBtn: document.getElementById("pauseBtn"),
+    resetBtn: document.getElementById("resetBtn"),
+    warningInput: document.getElementById("warningInput"),
+    status: document.getElementById("status"),
+  };
+
+  const clock = new GameClock();
+  let buildFile = null;
+  let scheduler = null;
+
+  function loadBuild(file, { persist } = { persist: true }) {
+    const timeline = buildTimeline(file);
+    if (timeline.length === 0) throw new Error("Build order has no events.");
+    buildFile = file;
+    scheduler = new CueScheduler(timeline);
+    clock.reset();
+    el.buildName.textContent = file.matchup ? `${file.name} (${file.matchup})` : file.name;
+    el.warningInput.value = file.defaultWarningSeconds ?? 10;
+    if (persist) {
+      try { localStorage.setItem("sc2timer.lastBuild", JSON.stringify(file)); } catch (_) {}
+    }
+    setStatus("");
+    render();
+    updateButtons();
+  }
+
+  function setStatus(message, isError) {
+    el.status.textContent = message;
+    el.status.classList.toggle("is-error", Boolean(isError));
+  }
+
+  el.importInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if (!parsed.name) throw new Error("Build order is missing a 'name'.");
+      if (!Array.isArray(parsed.events) || parsed.events.length === 0) throw new Error("Build order has no events.");
+      loadBuild(parsed);
+    } catch (err) {
+      setStatus(`Couldn't load build order: ${err.message}`, true);
+    }
+    e.target.value = "";
+  });
+
+  el.startBtn.addEventListener("click", () => {
+    clock.start();
+    speechSynthesis.resume();
+    updateButtons();
+  });
+  el.pauseBtn.addEventListener("click", () => {
+    clock.pause();
+    updateButtons();
+  });
+  el.resetBtn.addEventListener("click", () => {
+    clock.reset();
+    scheduler?.reset();
+    render();
+    updateButtons();
+  });
+  el.warningInput.addEventListener("change", () => {
+    if (buildFile) {
+      buildFile.defaultWarningSeconds = Number(el.warningInput.value) || 0;
+      loadBuild(buildFile);
+    }
+  });
+
+  function updateButtons() {
+    const hasBuild = Boolean(scheduler);
+    el.startBtn.disabled = !hasBuild || clock.state === "running";
+    el.pauseBtn.disabled = !hasBuild || clock.state !== "running";
+    el.resetBtn.disabled = !hasBuild || clock.state === "stopped";
+    el.clockState.textContent = clock.state[0].toUpperCase() + clock.state.slice(1);
+    el.clockState.classList.toggle("is-running", clock.state === "running");
+    el.clockState.classList.toggle("is-paused", clock.state === "paused");
+  }
+
+  function render() {
+    const elapsed = clock.elapsed;
+    el.clock.textContent = GameTime.format(elapsed);
+
+    if (!scheduler) {
+      el.nextLabel.textContent = "—";
+      el.nextCountdown.textContent = "";
+      el.timeline.innerHTML = "";
+      return;
+    }
+
+    const nextIndex = scheduler.getNextIndex(elapsed);
+    const next = nextIndex === -1 ? null : scheduler.events[nextIndex];
+    const remaining = next ? Math.max(0, next.time - elapsed) : null;
+    const imminent = remaining !== null && remaining <= 5;
+
+    el.nextLabel.textContent = next ? next.label : "Build complete";
+    el.nextCountdown.textContent = next ? `in ${Math.ceil(remaining)}s` : "";
+    el.nextLabel.classList.toggle("is-imminent", imminent);
+    el.nextCard.classList.toggle("is-imminent", imminent);
+
+    el.timeline.innerHTML = "";
+    scheduler.events.forEach((ev, i) => {
+      const li = document.createElement("li");
+      const isCompleted = ev.time <= elapsed;
+      li.className = isCompleted ? "completed" : (i === nextIndex ? "next-up" : "");
+      li.innerHTML = `<span class="t-time">${GameTime.format(ev.time)}</span><span class="t-label">${ev.label}</span>`;
+      el.timeline.appendChild(li);
+    });
+
+    const activeItem = el.timeline.children[Math.max(0, nextIndex === -1 ? scheduler.events.length - 1 : nextIndex)];
+    activeItem?.scrollIntoView({ block: "center" });
+  }
+
+  function tick() {
+    if (scheduler && clock.state === "running") {
+      for (const cue of scheduler.poll(clock.elapsed)) {
+        speak(cue.speech);
+      }
+    }
+    render();
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- Startup ----------
+
+  let initial = SAMPLE_BUILD;
+  try {
+    const saved = localStorage.getItem("sc2timer.lastBuild");
+    if (saved) initial = JSON.parse(saved);
+  } catch (_) {}
+
+  try {
+    loadBuild(initial, { persist: false });
+    if (initial === SAMPLE_BUILD) setStatus("Loaded sample build. Import your own JSON any time.");
+  } catch (err) {
+    setStatus(`Couldn't load saved build: ${err.message}`, true);
+  }
+
+  tick();
+</script>

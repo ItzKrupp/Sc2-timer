@@ -4,7 +4,31 @@ An audio-based build-order timer for StarCraft 2 Zerg players. Import a build
 order, press Start when the game begins, and it calls out timings ("Start
 Lair", "Inject", "Third hatchery"...) so you can keep your eyes on the game.
 
-## Why this tech stack
+There are two versions in this repo:
+
+- **`web/index.html`** (recommended) — a single self-contained HTML file.
+  Double-click it to open it in any browser (Chrome/Edge work best on
+  Windows) — no install, no build step, works fully offline. This is the
+  actively-tested version.
+- **`src/`** — a native .NET/WPF version. Written but not yet built or run
+  (see the note near the bottom of this file) — kept here in case you want a
+  "real" installed Windows app later.
+
+## Web version (`web/index.html`)
+
+Uses the browser's built-in Web Speech API for text-to-speech — no server,
+no API key, no account, and no network access needed once the page is open.
+Voices come from your OS/browser, same as the .NET version's approach but
+with zero build step.
+
+Just open `web/index.html` in a browser. It loads with a sample 2-base
+Roach/Ravager build already in — click **Import** to load your own JSON
+build order (same format as the .NET version, see
+`docs/BUILD_ORDER_FORMAT.md`), then **Start**. Your last-imported build is
+remembered (browser local storage) so it's still there next time you open
+the file.
+
+## Why the .NET/WPF version uses this stack
 
 - **.NET 8 + WPF** for the UI — a small, native Windows desktop app with no
   extra runtime to install (a self-contained build is a single folder you can
@@ -23,8 +47,9 @@ of a manual Start button, without having to touch the scheduling logic itself.
 ## Project layout
 
 ```
-src/Sc2Timer.Core/    Build order parsing, timeline expansion, clock, cue scheduling (plain .NET, no UI)
-src/Sc2Timer.App/     WPF UI + SAPI text-to-speech
+web/index.html        Self-contained HTML/JS version (recommended) — open directly in a browser
+src/Sc2Timer.Core/    .NET version: build order parsing, timeline expansion, clock, cue scheduling
+src/Sc2Timer.App/     .NET version: WPF UI + SAPI text-to-speech
 tests/                xUnit tests for Sc2Timer.Core
 samples/              Example build order JSON files
 docs/                 Build order file format reference
