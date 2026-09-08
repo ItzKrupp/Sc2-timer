@@ -274,12 +274,16 @@
     color: var(--text);
     border: 1px solid var(--border);
     border-radius: 5px;
-    padding: 5px 8px;
-    font-size: 12px;
+    padding: 6px 8px;
+    /* Must stay >=16px: iOS Safari auto-zooms the whole page on focus for
+       any input with a smaller font size, which is disorienting. */
+    font-size: 16px;
   }
 
   select, input[type="text"] { max-width: 190px; }
-  input[type="number"] { width: 56px; font-family: var(--font-mono); }
+  input[type="number"] { width: 64px; font-family: var(--font-mono); }
+
+  button, label[for="importInput"] { touch-action: manipulation; }
 
   .status {
     font-size: 11px;
@@ -413,17 +417,17 @@
   }
 
   .field-row span { font-size: 11px; color: var(--text-dim); }
-  .field-row input[type="text"] { width: 70px; max-width: 70px; }
-  .field-row input[type="number"] { width: 60px; }
+  .field-row input[type="text"] { width: 76px; max-width: 76px; }
+  .field-row input[type="number"] { width: 68px; }
 
-  .add-event button[type="submit"] {
+  .add-event-submit {
     background: var(--accent-dim);
     color: var(--bg);
     border: none;
     margin-top: 2px;
   }
 
-  .add-event button[type="submit"]:hover { background: var(--accent); }
+  .add-event-submit:hover { background: var(--accent); }
 
   .editor-actions { display: flex; justify-content: flex-end; }
 </style>
@@ -483,8 +487,8 @@
 
       <ul class="source-list" id="sourceList"></ul>
 
-      <form class="add-event" id="addEventForm">
-        <input type="text" id="eventLabel" placeholder="Event name (e.g. Start Lair, MULE, Chrono Nexus)" required />
+      <div class="add-event" id="addEventForm">
+        <input type="text" id="eventLabel" placeholder="Event name (e.g. Start Lair, MULE, Chrono Nexus)" />
 
         <label class="checkbox-row">
           <input type="checkbox" id="eventRecurring" /> Repeats (e.g. injects, MULEs, chronoboost)
@@ -492,26 +496,26 @@
 
         <div class="field-row" id="singleTimeRow">
           <span>At</span>
-          <input type="text" id="eventTime" placeholder="mm:ss" />
+          <input type="text" inputmode="numeric" id="eventTime" placeholder="mm:ss" />
         </div>
 
         <div class="field-row recurring-fields" id="recurringFields" hidden>
           <span>Start</span>
-          <input type="text" id="eventStartTime" placeholder="mm:ss" />
+          <input type="text" inputmode="numeric" id="eventStartTime" placeholder="mm:ss" />
           <span>Every</span>
-          <input type="number" id="eventInterval" placeholder="sec" min="1" />
+          <input type="number" inputmode="numeric" id="eventInterval" placeholder="sec" min="1" />
           <span>Until</span>
-          <input type="text" id="eventEndTime" placeholder="mm:ss" />
+          <input type="text" inputmode="numeric" id="eventEndTime" placeholder="mm:ss" />
         </div>
 
         <div class="field-row">
           <span>Warn</span>
-          <input type="number" id="eventWarning" placeholder="default" min="0" />
+          <input type="number" inputmode="numeric" id="eventWarning" placeholder="default" min="0" />
           <span>sec before</span>
         </div>
 
-        <button type="submit">Add Event</button>
-      </form>
+        <button type="button" class="add-event-submit" id="addEventBtn">Add Event</button>
+      </div>
 
       <div class="editor-actions">
         <button type="button" id="exportBtn">Download as JSON</button>
@@ -679,6 +683,7 @@
     eventInterval: document.getElementById("eventInterval"),
     eventEndTime: document.getElementById("eventEndTime"),
     eventWarning: document.getElementById("eventWarning"),
+    addEventBtn: document.getElementById("addEventBtn"),
     exportBtn: document.getElementById("exportBtn"),
   };
 
@@ -698,6 +703,7 @@
     buildFile = file;
     scheduler = new CueScheduler(timeline);
     clock.reset();
+    lastScrolledIndex = null;
     el.buildName.textContent = file.matchup ? `${file.name} (${file.matchup})` : file.name;
     el.warningInput.value = file.defaultWarningSeconds ?? 10;
     el.buildNameInput.value = file.name;
@@ -741,6 +747,8 @@
     });
   }
 
+  let lastScrolledIndex = null;
+
   function render() {
     const elapsed = clock.elapsed;
     el.clock.textContent = GameTime.format(elapsed);
@@ -779,8 +787,13 @@
       el.timeline.appendChild(li);
     });
 
-    const activeItem = el.timeline.children[Math.max(0, nextIndex === -1 ? scheduler.events.length - 1 : nextIndex)];
-    activeItem?.scrollIntoView({ block: "center" });
+    // Only auto-scroll when the "next" event actually changes, so this doesn't
+    // fight the user's own scrolling on every animation frame.
+    if (nextIndex !== lastScrolledIndex) {
+      lastScrolledIndex = nextIndex;
+      const activeItem = el.timeline.children[Math.max(0, nextIndex === -1 ? scheduler.events.length - 1 : nextIndex)];
+      activeItem?.scrollIntoView({ block: "center" });
+    }
   }
 
   function updateButtons() {
@@ -797,6 +810,15 @@
 
   el.startBtn.addEventListener("click", () => {
     clock.start();
+    // iOS Safari only allows speechSynthesis.speak() to start from code
+    // running synchronously inside a real user gesture like this click -
+    // calls made later from the tick loop are silently ignored otherwise.
+    // Speaking here, directly in the tap, unlocks audio for the rest of the
+    // session and doubles as an immediate confirmation that audio works.
+    if (speechSupported) {
+      try { speechSynthesis.resume(); } catch (_) { /* ignore */ }
+      speak("Timer started");
+    }
     updateButtons();
   });
   el.pauseBtn.addEventListener("click", () => {
@@ -850,8 +872,19 @@
     el.recurringFields.hidden = !el.eventRecurring.checked;
   });
 
-  el.addEventForm.addEventListener("submit", (e) => {
-    e.preventDefault();
+  function clearEventFields() {
+    el.eventLabel.value = "";
+    el.eventTime.value = "";
+    el.eventStartTime.value = "";
+    el.eventInterval.value = "";
+    el.eventEndTime.value = "";
+    el.eventWarning.value = "";
+    el.eventRecurring.checked = false;
+    el.singleTimeRow.hidden = false;
+    el.recurringFields.hidden = true;
+  }
+
+  function handleAddEvent() {
     if (!buildFile) {
       loadBuild({ name: "My Build", matchup: "", defaultWarningSeconds: Number(el.warningInput.value) || 10, events: [] });
     }
@@ -881,11 +914,21 @@
       buildFile.events.push(dto);
       loadBuild(buildFile);
       setStatus(`Added "${label}".`);
-      el.addEventForm.reset();
-      el.singleTimeRow.hidden = false;
-      el.recurringFields.hidden = true;
+      clearEventFields();
     } catch (err) {
       setStatus(err.message, true);
+    }
+  }
+
+  // A plain button + click handler, not a <form>/submit — mobile Safari's
+  // keyboard "Go"/"Done" key on a form field can trigger native submission
+  // behavior that's inconsistent across iOS versions, so we avoid forms
+  // entirely for this control.
+  el.addEventBtn.addEventListener("click", handleAddEvent);
+  el.eventLabel.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddEvent();
     }
   });
 
@@ -947,9 +990,6 @@
       refreshVoices();
       el.voiceSelect.addEventListener("change", (e) => {
         selectedVoice = speechSynthesis.getVoices().find((v) => v.name === e.target.value) || null;
-      });
-      el.startBtn.addEventListener("click", () => {
-        try { speechSynthesis.resume(); } catch (_) { /* ignore */ }
       });
     } catch (err) {
       setStatus("Voice list unavailable, but speech may still work.", false);
