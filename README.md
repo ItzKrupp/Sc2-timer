@@ -26,15 +26,30 @@ Just open `web/index.html` in a browser. It's not Zerg-specific — the JSON
 format is just timestamps and labels, so it works equally well for Terran
 MULEs or Protoss chrono boost (see `samples/` for one example per race).
 
-**You don't need to prepare a JSON file to use it.** The page opens with a
-click-through **Edit build order** panel: give your build a name, then add
-events one at a time (a time, a label, and optionally "repeats every N
-seconds" for things like injects/MULEs/chrono). Or click **Import** to load
-a JSON file — one you wrote by hand, or one an AI assistant generated for
-you (see `docs/BUILD_ORDER_FORMAT.md`). Whatever's currently loaded is saved
+**You don't need to prepare a JSON file to use it.** The **Load a build
+order** section has a race selector (Zerg/Terran/Protoss) with 4 built-in
+builds per race — pick one and go. Or use the click-through **Edit build
+order** panel: give your build a name, then add events one at a time (a
+time, a label, and optionally "repeats every N seconds" for things like
+injects/MULEs/chrono). Or click **Import** to load a JSON file — one you
+wrote by hand, or one an AI assistant generated for you (see
+`docs/BUILD_ORDER_FORMAT.md`). Whatever's currently loaded is saved
 automatically (browser local storage) so it's still there next time you open
 the file, and **Download as JSON** lets you save a build you built in the
 editor for reuse or sharing.
+
+**A note on the built-in builds' accuracy.** StarCraft II got a major balance
+patch (5.0.16, June 2026) that cut starting workers from 12 to 8 — probably
+the biggest economy change the game has had in years, and it's still only a
+couple of months old with two hotfixes since. The built-in builds reflect
+the right *structure* for this patch (correct building/tech order, and a
+handful of concretely-confirmed numbers like the 8-worker start and the
+Ghost's supply cost drop), but I couldn't reach build-order databases like
+Spawning Tool from this environment to pull verified replay timings, so
+exact seconds beyond what's specifically confirmed are estimates. Each one
+shows a short note when loaded saying as much — treat them as a solid
+starting shape, watch how they actually play out, and adjust via **Edit
+build order**.
 
 ## Why the .NET/WPF version uses this stack
 

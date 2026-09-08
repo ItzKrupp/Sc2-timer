@@ -3,8 +3,10 @@
 Works for any race — the format itself has no idea what a Zerg is. It's just
 a name and a list of timed cues; whether those cues say "Inject", "MULE", or
 "Chrono boost" is entirely up to what you put in `text`. You can write one by
-hand, generate one with an AI assistant, or build one straight in the app's
-**Edit build order** panel (no JSON required at all).
+hand, generate one with an AI assistant, pick one from the app's built-in
+**Load a build order** library (a handful of common builds per race, browsable
+by race), or build one straight in the **Edit build order** panel (no JSON
+required at all).
 
 A build order is a JSON file with this shape:
 
@@ -12,6 +14,8 @@ A build order is a JSON file with this shape:
 {
   "name": "Zerg 2-Base Roach/Ravager",   // shown in the UI
   "matchup": "ZvT",                       // optional, just informational
+  "race": "Zerg",                         // optional, just informational
+  "note": "Verify against your own games", // optional, shown when loaded
   "defaultWarningSeconds": 10,             // "10 seconds until X" lead time for normal events
   "events": [
     // A single timed event:
@@ -41,6 +45,8 @@ A build order is a JSON file with this shape:
 |---|---|---|---|
 | `name` | file | yes | Build order title, shown in the UI. |
 | `matchup` | file | no | Free text (e.g. `"ZvT"`), informational only. |
+| `race` | file | no | Free text (e.g. `"Zerg"`), informational only. |
+| `note` | file | no | Free text shown in the status line when the build is loaded — e.g. a caveat about how current/verified the timings are. |
 | `defaultWarningSeconds` | file | no | Default warning lead time for non-recurring events. Default `10`. |
 | `text` | event | yes | Spoken and displayed label, e.g. `"Start Lair"`. |
 | `time` | single event | yes | `"mm:ss"` game time. |

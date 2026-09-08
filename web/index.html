@@ -247,6 +247,77 @@
   #pauseBtn:not(:disabled) { color: var(--warn); }
   #resetBtn:not(:disabled) { color: var(--danger); }
 
+  .build-library {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .build-library-heading {
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .race-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .race-tab {
+    background: var(--panel-raised);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 6px 4px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .race-tab.is-active {
+    color: var(--bg);
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .build-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .build-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+
+  .build-list .b-info { display: flex; flex-direction: column; min-width: 0; }
+  .build-list .b-name { font-size: 13px; font-weight: 600; }
+  .build-list .b-matchup { font-size: 11px; color: var(--text-dim); }
+
+  .build-library-note {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+
   .settings {
     padding: 14px 20px 0;
     border-top: 1px solid var(--border);
@@ -488,6 +559,17 @@
     <button id="resetBtn" type="button" disabled>Reset</button>
   </div>
 
+  <div class="build-library">
+    <div class="build-library-heading">Load a build order</div>
+    <div class="race-tabs" id="raceTabs">
+      <button type="button" class="race-tab" data-race="Zerg">Zerg</button>
+      <button type="button" class="race-tab" data-race="Terran">Terran</button>
+      <button type="button" class="race-tab" data-race="Protoss">Protoss</button>
+    </div>
+    <ul class="build-list" id="buildList"></ul>
+    <div class="build-library-note" id="buildLibraryNote"></div>
+  </div>
+
   <div class="settings">
     <div class="settings-row">
       <span>Voice</span>
@@ -668,23 +750,229 @@
     }
   }
 
-  // ---------- Sample build (loaded on first run only) ----------
+  // ---------- Built-in build library ----------
+  // Reflects patch 5.0.16 (8 starting workers, down from 12 - the biggest
+  // economy change in years) at a structural level: right buildings/tech in
+  // the right order, using the handful of concrete numbers that are publicly
+  // confirmed for this patch (hatch-before-pool macro timing, the 2:30 third
+  // hatchery, Ghost dropping to 1 supply, permanent Oracle Stasis Ward, etc).
+  // Exact seconds beyond those confirmed points are estimates, not pulled
+  // from verified replays - this patch is ~2 months old with two hotfixes
+  // already, so treat these as a starting point and adjust via "Edit build
+  // order" once you see how they actually play out for you.
+  const PATCH_NOTE = "Estimated for patch 5.0.16 (8-worker start) - verify against your own games.";
 
-  const SAMPLE_BUILD = {
-    name: "Zerg 2-Base Roach/Ravager (example)",
-    matchup: "ZvT",
-    defaultWarningSeconds: 10,
-    events: [
-      { time: "00:17", text: "First overlord" },
-      { time: "01:00", text: "Extractor" },
-      { time: "01:15", text: "Spawning pool" },
-      { time: "02:00", text: "Second hatchery" },
-      { time: "02:20", text: "Roach warren" },
-      { time: "03:00", text: "Lair" },
-      { time: "03:45", text: "Start plus one ranged carapace" },
-      { time: "04:30", text: "Third hatchery" },
-      { time: "05:00", text: "Ravager tech, prepare to attack" },
-      { recurring: true, text: "Inject", startTime: "02:00", intervalSeconds: 29, endTime: "12:00", warningSeconds: 0 },
+  const BUILTIN_BUILDS = {
+    Zerg: [
+      {
+        name: "Standard Macro Opener",
+        matchup: "ZvX",
+        note: PATCH_NOTE,
+        defaultWarningSeconds: 10,
+        events: [
+          { time: "00:15", text: "First overlord" },
+          { time: "01:20", text: "Natural hatchery" },
+          { time: "01:35", text: "Spawning pool" },
+          { time: "01:50", text: "Extractor, start zergling speed" },
+          { time: "02:05", text: "Queen x2" },
+          { time: "02:30", text: "Third hatchery" },
+          { time: "03:15", text: "Second overlord wave, start evolution chamber" },
+          { time: "04:00", text: "Lair" },
+          { recurring: true, text: "Inject", startTime: "02:15", intervalSeconds: 40, endTime: "14:00", warningSeconds: 0 },
+        ],
+      },
+      {
+        name: "12 Pool Speedling Timing",
+        matchup: "ZvT",
+        note: PATCH_NOTE,
+        defaultWarningSeconds: 8,
+        events: [
+          { time: "00:55", text: "Spawning pool" },
+          { time: "01:05", text: "Extractor" },
+          { time: "01:20", text: "Queen, start zergling speed" },
+          { time: "01:40", text: "Natural hatchery" },
+          { time: "02:20", text: "Zergling speed done, start the push" },
+          { time: "02:45", text: "Attack the ramp" },
+          { time: "04:00", text: "Third hatchery if the attack doesn't kill" },
+          { recurring: true, text: "Inject", startTime: "01:30", intervalSeconds: 40, endTime: "10:00", warningSeconds: 0 },
+        ],
+      },
+      {
+        name: "Roach/Ravager Two-Base",
+        matchup: "ZvT",
+        note: PATCH_NOTE,
+        defaultWarningSeconds: 10,
+        events: [
+          { time: "00:15", text: "First overlord" },
+          { time: "01:20", text: "Natural hatchery" },
+          { time: "01:35", text: "Spawning pool" },
+          { time: "01:55", text: "Extractor" },
+          { time: "02:40", text: "Roach warren" },
+          { time: "03:15", text: "Lair" },
+          { time: "04:00", text: "Start plus one ranged carapace" },
+          { time: "04:45", text: "Ravager tech" },
+          { time: "06:00", text: "Roach/Ravager timing push" },
+          { recurring: true, text: "Inject", startTime: "02:15", intervalSeconds: 40, endTime: "12:00", warningSeconds: 0 },
+        ],
+      },
+      {
+        name: "Ling/Bane/Infestor Macro",
+        matchup: "ZvP",
+        note: PATCH_NOTE,
+        defaultWarningSeconds: 10,
+        events: [
+          { time: "00:15", text: "First overlord" },
+          { time: "01:20", text: "Natural hatchery" },
+          { time: "01:35", text: "Spawning pool" },
+          { time: "01:50", text: "Extractor, zergling speed" },
+          { time: "02:30", text: "Third hatchery" },
+          { time: "03:00", text: "Baneling nest" },
+          { time: "04:15", text: "Lair" },
+          { time: "05:30", text: "Infestation pit" },
+          { time: "07:00", text: "Start augmented muscles" },
+          { time: "08:00", text: "Hive" },
+          { recurring: true, text: "Inject", startTime: "02:15", intervalSeconds: 40, endTime: "16:00", warningSeconds: 0 },
+        ],
+      },
+    ],
+    Terran: [
+      {
+        name: "Reaper Expand into Bio",
+        matchup: "TvZ",
+        note: PATCH_NOTE,
+        defaultWarningSeconds: 10,
+        events: [
+          { time: "00:20", text: "Barracks" },
+          { time: "00:55", text: "Refinery, start reaper" },
+          { time: "01:30", text: "Orbital command, natural command center" },
+          { time: "02:10", text: "Reaper scouting the natural" },
+          { time: "02:45", text: "Factory" },
+          { time: "03:30", text: "Starport, tech lab on barracks" },
+          { time: "04:30", text: "Start ghost, keep bio flowing" },
+          { time: "05:15", text: "Combat shield and stim done, push out" },
+          { recurring: true, text: "MULE", startTime: "01:45", intervalSeconds: 80, endTime: "12:00", warningSeconds: 0 },
+        ],
+      },
+      {
+        name: "1-1-1 Tech Harass",
+        matchup: "TvP",
+        note: PATCH_NOTE,
+        defaultWarningSeconds: 10,
+        events: [
+          { time: "00:20", text: "Barracks" },
+          { time: "00:55", text: "Refinery, start reaper" },
+          { time: "01:30", text: "Orbital command, natural command center" },
+          { time: "02:10", text: "Factory" },
+          { time: "03:00", text: "Starport" },
+          { time: "03:40", text: "Hellion harass" },
+          { time: "04:30", text: "Banshee cloak" },
+          { time: "05:15", text: "Widow mine drop" },
+          { recurring: true, text: "MULE", startTime: "01:45", intervalSeconds: 80, endTime: "12:00", warningSeconds: 0 },
+        ],
+      },
+      {
+        name: "2-1-1 Timing Push",
+        matchup: "TvZ",
+        note: PATCH_NOTE,
+        defaultWarningSeconds: 10,
+        events: [
+          { time: "00:20", text: "Barracks" },
+          { time: "00:55", text: "Refinery, start reaper" },
+          { time: "01:30", text: "Orbital command, natural command center" },
+          { time: "02:15", text: "Second barracks, factory" },
+          { time: "03:00", text: "Start combat shield" },
+          { time: "03:45", text: "Start stim" },
+          { time: "04:30", text: "Concussive shells, load up the tank" },
+          { time: "05:30", text: "Push out before roach/ravager caps" },
+          { recurring: true, text: "MULE", startTime: "01:45", intervalSeconds: 80, endTime: "10:00", warningSeconds: 0 },
+        ],
+      },
+      {
+        name: "Fast Third Command Center",
+        matchup: "TvX",
+        note: PATCH_NOTE,
+        defaultWarningSeconds: 10,
+        events: [
+          { time: "00:20", text: "Barracks" },
+          { time: "00:55", text: "Refinery, start reaper" },
+          { time: "01:30", text: "Orbital command, natural command center" },
+          { time: "02:30", text: "Second refinery" },
+          { time: "03:15", text: "Factory" },
+          { time: "03:45", text: "Third command center" },
+          { time: "04:30", text: "Starport, third orbital" },
+          { time: "05:30", text: "Fourth refinery, expand tech" },
+          { recurring: true, text: "MULE", startTime: "01:45", intervalSeconds: 80, endTime: "14:00", warningSeconds: 0 },
+        ],
+      },
+    ],
+    Protoss: [
+      {
+        name: "Oracle Expand",
+        matchup: "PvZ",
+        note: PATCH_NOTE,
+        defaultWarningSeconds: 10,
+        events: [
+          { time: "00:20", text: "Gateway" },
+          { time: "01:05", text: "Cybernetics core" },
+          { time: "01:45", text: "Natural nexus" },
+          { time: "02:15", text: "Stargate" },
+          { time: "03:15", text: "Oracle out, stasis ward the natural" },
+          { time: "04:00", text: "Twilight council" },
+          { time: "05:00", text: "Start blink or charge" },
+          { recurring: true, text: "Chrono boost", startTime: "00:30", intervalSeconds: 80, endTime: "10:00", warningSeconds: 0 },
+        ],
+      },
+      {
+        name: "Blink Stalker Aggression",
+        matchup: "PvT",
+        note: PATCH_NOTE,
+        defaultWarningSeconds: 10,
+        events: [
+          { time: "00:20", text: "Gateway" },
+          { time: "01:05", text: "Cybernetics core" },
+          { time: "01:35", text: "Second gateway, warp gate research" },
+          { time: "02:10", text: "Natural nexus" },
+          { time: "02:45", text: "Twilight council" },
+          { time: "03:45", text: "Start blink" },
+          { time: "04:45", text: "Blink stalkers ready, look for a flank" },
+          { time: "05:30", text: "Robotics facility" },
+          { recurring: true, text: "Chrono boost", startTime: "00:30", intervalSeconds: 80, endTime: "10:00", warningSeconds: 0 },
+        ],
+      },
+      {
+        name: "Chargelot Drop",
+        matchup: "PvT",
+        note: PATCH_NOTE,
+        defaultWarningSeconds: 10,
+        events: [
+          { time: "00:20", text: "Gateway" },
+          { time: "01:05", text: "Cybernetics core" },
+          { time: "01:45", text: "Natural nexus" },
+          { time: "02:20", text: "Twilight council" },
+          { time: "03:00", text: "Robotics facility, start charge" },
+          { time: "04:00", text: "Warp prism" },
+          { time: "05:00", text: "Charge done, load the prism" },
+          { time: "05:30", text: "Drop the mineral line" },
+          { recurring: true, text: "Chrono boost", startTime: "00:30", intervalSeconds: 80, endTime: "10:00", warningSeconds: 0 },
+        ],
+      },
+      {
+        name: "Robo into Skytoss",
+        matchup: "PvX",
+        note: PATCH_NOTE,
+        defaultWarningSeconds: 10,
+        events: [
+          { time: "00:20", text: "Gateway" },
+          { time: "01:05", text: "Cybernetics core" },
+          { time: "01:45", text: "Natural nexus" },
+          { time: "02:20", text: "Robotics facility" },
+          { time: "03:15", text: "Robotics bay, start colossus range" },
+          { time: "04:15", text: "Third nexus" },
+          { time: "05:15", text: "Stargate, start void rays" },
+          { time: "07:00", text: "Fleet beacon, start carriers" },
+          { recurring: true, text: "Chrono boost", startTime: "00:30", intervalSeconds: 80, endTime: "14:00", warningSeconds: 0 },
+        ],
+      },
     ],
   };
 
@@ -723,6 +1011,9 @@
     eventEndTime: document.getElementById("eventEndTime"),
     eventWarning: document.getElementById("eventWarning"),
     addEventBtn: document.getElementById("addEventBtn"),
+    raceTabs: document.getElementById("raceTabs"),
+    buildList: document.getElementById("buildList"),
+    buildLibraryNote: document.getElementById("buildLibraryNote"),
     exportBtn: document.getElementById("exportBtn"),
   };
 
@@ -892,6 +1183,52 @@
     }
     e.target.value = "";
   });
+
+  // ---------- Build library (race selector + built-in builds) ----------
+
+  let currentLibraryRace = "Zerg";
+
+  function renderBuildList() {
+    el.raceTabs.querySelectorAll(".race-tab").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.race === currentLibraryRace);
+    });
+
+    el.buildList.innerHTML = "";
+    const builds = BUILTIN_BUILDS[currentLibraryRace] || [];
+    builds.forEach((build) => {
+      const li = document.createElement("li");
+      const info = document.createElement("div");
+      info.className = "b-info";
+      const name = document.createElement("div");
+      name.className = "b-name";
+      name.textContent = build.name;
+      const matchup = document.createElement("div");
+      matchup.className = "b-matchup";
+      matchup.textContent = build.matchup;
+      info.append(name, matchup);
+      const loadBtn = document.createElement("button");
+      loadBtn.type = "button";
+      loadBtn.className = "mini-btn";
+      loadBtn.textContent = "Load";
+      loadBtn.addEventListener("click", () => {
+        loadBuild({ ...build, race: currentLibraryRace });
+        setStatus(`Loaded "${build.name}" (${currentLibraryRace}).${build.note ? " " + build.note : ""}`);
+      });
+      li.append(info, loadBtn);
+      el.buildList.appendChild(li);
+    });
+
+    el.buildLibraryNote.textContent = builds[0] ? builds[0].note || "" : "";
+  }
+
+  el.raceTabs.querySelectorAll(".race-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentLibraryRace = btn.dataset.race;
+      renderBuildList();
+    });
+  });
+
+  renderBuildList();
 
   // ---------- Build order editor ----------
 
@@ -1144,7 +1481,7 @@
 
   // ---------- Startup ----------
 
-  let initial = SAMPLE_BUILD;
+  let initial = { ...BUILTIN_BUILDS.Zerg[0], race: "Zerg" };
   let loadedFromStorage = false;
   try {
     const saved = localStorage.getItem("sc2timer.lastBuild");
@@ -1156,7 +1493,7 @@
 
   try {
     loadBuild(initial, { persist: false });
-    if (!loadedFromStorage) setStatus('Loaded a sample build. Click "Edit build order" to add your own events, or Import a JSON file.');
+    if (!loadedFromStorage) setStatus('Loaded a sample build. Use "Load a build order" below to browse by race, "Edit build order" to add your own events, or Import a JSON file.');
   } catch (err) {
     setStatus(`Couldn't load saved build: ${err.message}`, true);
     loadBuild({ name: "My Build", matchup: "", defaultWarningSeconds: 10, events: [] }, { persist: false });
