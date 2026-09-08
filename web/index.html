@@ -1024,26 +1024,68 @@
     } catch (_) { /* best-effort */ }
   }
 
+  // Web Speech API voices don't expose gender, only a name - these are common
+  // naming patterns across Windows/macOS/Chrome/Edge voice packs, used only to
+  // sort/label the picker so a female-sounding voice is easy to find quickly.
+  const FEMALE_NAME_HINTS = [
+    "zira", "aria", "jenny", "samantha", "victoria", "karen", "moira", "tessa",
+    "susan", "linda", "salli", "joanna", "kendra", "kimberly", "ivy", "emma",
+    "ana", "michelle", "allison", "ava", "serena", "nicky", "female", "woman",
+  ];
+  const MALE_NAME_HINTS = [
+    "david", "mark", "guy", "james", "daniel", "george", "fred", "alex", "tom",
+    "christopher", "eric", "ryan", "matthew", "justin", "kevin", "brian", "male",
+  ];
+  function guessVoiceGender(name) {
+    const n = name.toLowerCase();
+    if (FEMALE_NAME_HINTS.some((h) => n.includes(h))) return "female";
+    if (MALE_NAME_HINTS.some((h) => n.includes(h))) return "male";
+    return null;
+  }
+
+  // Known good-sounding voices, best first - tried in order for the initial
+  // default. The "Online (Natural)" ones (Edge) and Chrome's cloud voices
+  // sound dramatically better than the classic offline David/Zira voices,
+  // at the cost of needing an internet connection to speak.
+  const PREFERRED_VOICE_NAMES = [
+    "Microsoft Aria Online (Natural)",
+    "Microsoft Jenny Online (Natural)",
+    "Microsoft Emma Online (Natural)",
+    "Google UK English Female",
+    "Google US English",
+    "Samantha",
+    "Victoria",
+    "Karen",
+    "Microsoft Zira Desktop",
+    "Microsoft Zira",
+  ];
+
   if (speechSupported) {
     try {
       const refreshVoices = () => {
         const voices = speechSynthesis.getVoices();
         const previous = el.voiceSelect.value || (savedVoicePrefs && savedVoicePrefs.voiceName) || "";
         el.voiceSelect.innerHTML = "";
-        voices
-          .filter((v) => v.lang.startsWith("en"))
-          .concat(voices.filter((v) => !v.lang.startsWith("en")))
-          .forEach((v) => {
-            const opt = document.createElement("option");
-            opt.value = v.name;
-            opt.textContent = `${v.name} (${v.lang})${v.localService ? "" : " · online"}`;
-            el.voiceSelect.appendChild(opt);
-          });
+        const english = voices.filter((v) => v.lang.startsWith("en"));
+        const rest = voices.filter((v) => !v.lang.startsWith("en"));
+        const genderRank = { female: 0, male: 2 };
+        english.sort((a, b) => (genderRank[guessVoiceGender(a.name)] ?? 1) - (genderRank[guessVoiceGender(b.name)] ?? 1));
+        english.concat(rest).forEach((v) => {
+          const opt = document.createElement("option");
+          opt.value = v.name;
+          const gender = guessVoiceGender(v.name);
+          const tag = gender === "female" ? "♀ " : gender === "male" ? "♂ " : "";
+          opt.textContent = `${tag}${v.name} (${v.lang})${v.localService ? "" : " · online"}`;
+          el.voiceSelect.appendChild(opt);
+        });
         if (previous && voices.some((v) => v.name === previous)) {
           el.voiceSelect.value = previous;
         } else {
-          const localEnglish = voices.find((v) => v.lang.startsWith("en") && v.localService);
-          if (localEnglish) el.voiceSelect.value = localEnglish.name;
+          const preferred = PREFERRED_VOICE_NAMES.map((name) => voices.find((v) => v.name === name)).find(Boolean);
+          const anyFemale = voices.find((v) => v.lang.startsWith("en") && guessVoiceGender(v.name) === "female");
+          const anyEnglish = voices.find((v) => v.lang.startsWith("en"));
+          const chosen = preferred || anyFemale || anyEnglish;
+          if (chosen) el.voiceSelect.value = chosen.name;
         }
         selectedVoice = voices.find((v) => v.name === el.voiceSelect.value) || null;
       };
