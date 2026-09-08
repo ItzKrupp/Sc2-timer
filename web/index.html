@@ -285,6 +285,31 @@
 
   button, label[for="importInput"] { touch-action: manipulation; }
 
+  .voice-row { display: flex; gap: 6px; align-items: center; }
+  .voice-row select { max-width: 150px; }
+
+  .mini-btn {
+    background: var(--panel-raised);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    touch-action: manipulation;
+    white-space: nowrap;
+  }
+
+  .mini-btn:hover { background: #241d30; }
+
+  input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+    max-width: 190px;
+  }
+
   .status {
     font-size: 11px;
     color: var(--text-dim);
@@ -466,7 +491,18 @@
   <div class="settings">
     <div class="settings-row">
       <span>Voice</span>
-      <select id="voiceSelect"></select>
+      <div class="voice-row">
+        <select id="voiceSelect"></select>
+        <button type="button" class="mini-btn" id="testVoiceBtn">Test</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <span>Rate</span>
+      <input type="range" id="rateInput" min="0.7" max="1.6" step="0.05" value="1.05" />
+    </div>
+    <div class="settings-row">
+      <span>Pitch</span>
+      <input type="range" id="pitchInput" min="0.5" max="1.5" step="0.05" value="0.9" />
     </div>
     <div class="settings-row">
       <span>Default warning lead</span>
@@ -668,6 +704,9 @@
     resetBtn: document.getElementById("resetBtn"),
     warningInput: document.getElementById("warningInput"),
     voiceSelect: document.getElementById("voiceSelect"),
+    testVoiceBtn: document.getElementById("testVoiceBtn"),
+    rateInput: document.getElementById("rateInput"),
+    pitchInput: document.getElementById("pitchInput"),
     status: document.getElementById("status"),
     buildNameInput: document.getElementById("buildNameInput"),
     buildMatchupInput: document.getElementById("buildMatchupInput"),
@@ -954,11 +993,33 @@
   const speechSupported = typeof window.speechSynthesis !== "undefined" && typeof SpeechSynthesisUtterance !== "undefined";
   let selectedVoice = null;
 
+  let savedVoicePrefs = null;
+  try {
+    const raw = localStorage.getItem("sc2timer.voicePrefs");
+    if (raw) savedVoicePrefs = JSON.parse(raw);
+  } catch (_) { /* unavailable */ }
+  if (savedVoicePrefs) {
+    if (savedVoicePrefs.rate) el.rateInput.value = savedVoicePrefs.rate;
+    if (savedVoicePrefs.pitch) el.pitchInput.value = savedVoicePrefs.pitch;
+  }
+
+  function saveVoicePrefs() {
+    try {
+      localStorage.setItem("sc2timer.voicePrefs", JSON.stringify({
+        voiceName: selectedVoice ? selectedVoice.name : null,
+        rate: el.rateInput.value,
+        pitch: el.pitchInput.value,
+      }));
+    } catch (_) { /* unavailable */ }
+  }
+
   function speak(text) {
     if (!speechSupported) return;
     try {
       const utterance = new SpeechSynthesisUtterance(text);
       if (selectedVoice) utterance.voice = selectedVoice;
+      utterance.rate = Number(el.rateInput.value) || 1;
+      utterance.pitch = Number(el.pitchInput.value) || 1;
       speechSynthesis.speak(utterance);
     } catch (_) { /* best-effort */ }
   }
@@ -967,7 +1028,7 @@
     try {
       const refreshVoices = () => {
         const voices = speechSynthesis.getVoices();
-        const previous = el.voiceSelect.value;
+        const previous = el.voiceSelect.value || (savedVoicePrefs && savedVoicePrefs.voiceName) || "";
         el.voiceSelect.innerHTML = "";
         voices
           .filter((v) => v.lang.startsWith("en"))
@@ -990,13 +1051,18 @@
       refreshVoices();
       el.voiceSelect.addEventListener("change", (e) => {
         selectedVoice = speechSynthesis.getVoices().find((v) => v.name === e.target.value) || null;
+        saveVoicePrefs();
       });
+      el.rateInput.addEventListener("change", saveVoicePrefs);
+      el.pitchInput.addEventListener("change", saveVoicePrefs);
+      el.testVoiceBtn.addEventListener("click", () => speak("Third hatchery. Inject. Start Lair."));
     } catch (err) {
       setStatus("Voice list unavailable, but speech may still work.", false);
     }
   } else {
     el.voiceSelect.innerHTML = '<option>Not supported in this browser</option>';
     el.voiceSelect.disabled = true;
+    el.testVoiceBtn.disabled = true;
     setStatus("This browser/context doesn't expose text-to-speech, so cues will be silent. Try opening this file directly in Chrome or Edge.", true);
   }
 
