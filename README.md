@@ -41,15 +41,17 @@ editor for reuse or sharing.
 **A note on the built-in builds' accuracy.** StarCraft II got a major balance
 patch (5.0.16, June 2026) that cut starting workers from 12 to 8 — probably
 the biggest economy change the game has had in years, and it's still only a
-couple of months old with two hotfixes since. The built-in builds reflect
-the right *structure* for this patch (correct building/tech order, and a
-handful of concretely-confirmed numbers like the 8-worker start and the
-Ghost's supply cost drop), but I couldn't reach build-order databases like
-Spawning Tool from this environment to pull verified replay timings, so
-exact seconds beyond what's specifically confirmed are estimates. Each one
-shows a short note when loaded saying as much — treat them as a solid
-starting shape, watch how they actually play out, and adjust via **Edit
-build order**.
+couple of months old with two hotfixes since (one of which reverted a Ghost
+supply change back to its original value, a reminder that even "current"
+details from this patch are still moving). The built-in builds reflect the
+right *structure* for it (correct building/tech order, and a handful of
+concretely-confirmed numbers like the 8-worker start, the 2:30 third
+hatchery, and Warpgate research moving onto the Gateway itself), but I
+couldn't reach build-order databases like Spawning Tool from this
+environment to pull verified replay timings, so exact seconds beyond what's
+specifically confirmed are estimates. Each one shows a short note when
+loaded saying as much — treat them as a solid starting shape, watch how they
+actually play out, and adjust via **Edit build order**.
 
 ## Why the .NET/WPF version uses this stack
 
