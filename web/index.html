@@ -1,4 +1,9 @@
-<title>Zerg Build Timer</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC2 Build Timer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
@@ -14,8 +19,8 @@
     --accent-dim: #6f8f3a;
     --warn: #ff7a45;
     --danger: #ff5470;
-    --font-display: "Rajdhani", "Segoe UI", sans-serif;
-    --font-mono: "JetBrains Mono", "Consolas", monospace;
+    --font-display: "Rajdhani", "Segoe UI", Arial, sans-serif;
+    --font-mono: "JetBrains Mono", "Consolas", "Courier New", monospace;
   }
 
   * { box-sizing: border-box; }
@@ -34,6 +39,8 @@
     justify-content: center;
     padding: 40px 16px;
   }
+
+  button, input, select { font-family: inherit; }
 
   .hud {
     width: 100%;
@@ -99,7 +106,6 @@
     border: 1px solid var(--border);
     border-radius: 8px;
     text-align: center;
-    position: relative;
   }
 
   .next-heading {
@@ -201,6 +207,12 @@
   .timeline li.next-up .t-label { color: var(--accent); font-weight: 600; }
   .timeline li.next-up .t-time { color: var(--accent); }
 
+  .timeline .empty {
+    color: var(--text-dim);
+    font-size: 13px;
+    padding: 10px 2px;
+  }
+
   .transport {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -214,7 +226,6 @@
     color: var(--text);
     border: none;
     padding: 14px 4px;
-    font-family: var(--font-display);
     font-size: 13px;
     font-weight: 700;
     letter-spacing: 0.12em;
@@ -237,7 +248,7 @@
   #resetBtn:not(:disabled) { color: var(--danger); }
 
   .settings {
-    padding: 14px 20px 20px;
+    padding: 14px 20px 0;
     border-top: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -258,31 +269,170 @@
     flex-shrink: 0;
   }
 
-  select, input[type="number"] {
+  select, input[type="text"], input[type="number"] {
     background: var(--panel-raised);
     color: var(--text);
     border: 1px solid var(--border);
     border-radius: 5px;
     padding: 5px 8px;
-    font-family: var(--font-display);
     font-size: 12px;
-    max-width: 190px;
   }
 
+  select, input[type="text"] { max-width: 190px; }
   input[type="number"] { width: 56px; font-family: var(--font-mono); }
 
   .status {
     font-size: 11px;
     color: var(--text-dim);
     min-height: 14px;
+    padding: 6px 20px 14px;
   }
 
   .status.is-error { color: var(--danger); }
+
+  /* --- Build order editor --- */
+
+  .editor {
+    border-top: 1px solid var(--border);
+  }
+
+  .editor summary {
+    padding: 12px 20px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .editor summary:hover { color: var(--text); }
+  .editor[open] summary { color: var(--accent); }
+
+  .editor-body {
+    padding: 4px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .editor-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .editor-row input[type="text"] { flex: 1; max-width: none; }
+
+  .editor button[type="button"], .editor button[type="submit"] {
+    background: var(--panel-raised);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .editor button[type="button"]:hover, .editor button[type="submit"]:hover { background: #241d30; }
+
+  .source-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  .source-list li {
+    background: var(--panel-raised);
+    padding: 7px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .source-list .s-time {
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  .source-list .s-label { flex: 1; }
+
+  .source-list .s-remove {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    padding: 2px 4px;
+  }
+
+  .source-list .s-remove:hover { color: var(--danger); }
+
+  .source-list .empty { color: var(--text-dim); padding: 10px; }
+
+  .add-event {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .add-event input[type="text"] { width: 100%; max-width: none; }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .field-row span { font-size: 11px; color: var(--text-dim); }
+  .field-row input[type="text"] { width: 70px; max-width: 70px; }
+  .field-row input[type="number"] { width: 60px; }
+
+  .add-event button[type="submit"] {
+    background: var(--accent-dim);
+    color: var(--bg);
+    border: none;
+    margin-top: 2px;
+  }
+
+  .add-event button[type="submit"]:hover { background: var(--accent); }
+
+  .editor-actions { display: flex; justify-content: flex-end; }
 </style>
+</head>
+<body>
 
 <div class="hud">
   <div class="hud-header">
-    <div class="wordmark">Zerg Build Timer</div>
+    <div class="wordmark">SC2 Build Timer</div>
     <div class="build-name" id="buildName">—</div>
   </div>
 
@@ -304,9 +454,9 @@
     <label for="importInput">Import
       <input type="file" id="importInput" accept="application/json,.json" hidden />
     </label>
-    <button id="startBtn">Start</button>
-    <button id="pauseBtn" disabled>Pause</button>
-    <button id="resetBtn" disabled>Reset</button>
+    <button id="startBtn" type="button">Start</button>
+    <button id="pauseBtn" type="button" disabled>Pause</button>
+    <button id="resetBtn" type="button" disabled>Reset</button>
   </div>
 
   <div class="settings">
@@ -318,18 +468,64 @@
       <span>Default warning lead</span>
       <input type="number" id="warningInput" min="0" max="60" value="10" /> <span>sec</span>
     </div>
-    <div class="status" id="status"></div>
   </div>
+
+  <div class="status" id="status"></div>
+
+  <details class="editor" id="editorDetails">
+    <summary>Edit build order</summary>
+    <div class="editor-body">
+      <div class="editor-row">
+        <input type="text" id="buildNameInput" placeholder="Build name" />
+        <input type="text" id="buildMatchupInput" placeholder="Matchup (optional)" style="max-width:120px" />
+        <button type="button" id="newBuildBtn">New</button>
+      </div>
+
+      <ul class="source-list" id="sourceList"></ul>
+
+      <form class="add-event" id="addEventForm">
+        <input type="text" id="eventLabel" placeholder="Event name (e.g. Start Lair, MULE, Chrono Nexus)" required />
+
+        <label class="checkbox-row">
+          <input type="checkbox" id="eventRecurring" /> Repeats (e.g. injects, MULEs, chronoboost)
+        </label>
+
+        <div class="field-row" id="singleTimeRow">
+          <span>At</span>
+          <input type="text" id="eventTime" placeholder="mm:ss" />
+        </div>
+
+        <div class="field-row recurring-fields" id="recurringFields" hidden>
+          <span>Start</span>
+          <input type="text" id="eventStartTime" placeholder="mm:ss" />
+          <span>Every</span>
+          <input type="number" id="eventInterval" placeholder="sec" min="1" />
+          <span>Until</span>
+          <input type="text" id="eventEndTime" placeholder="mm:ss" />
+        </div>
+
+        <div class="field-row">
+          <span>Warn</span>
+          <input type="number" id="eventWarning" placeholder="default" min="0" />
+          <span>sec before</span>
+        </div>
+
+        <button type="submit">Add Event</button>
+      </form>
+
+      <div class="editor-actions">
+        <button type="button" id="exportBtn">Download as JSON</button>
+      </div>
+    </div>
+  </details>
 </div>
 
 <script>
-  // ---------- Core scheduling logic ----------
-  // (Ported 1:1 from a verified prototype: GameTime parse/format,
-  // TimelineBuilder expansion of recurring events, CueScheduler firing.)
+  // ---------- Core scheduling logic (framework/DOM-free, unit tested) ----------
 
   const GameTime = {
     parse(text) {
-      const m = /^(\d{1,3}):([0-5]?\d)$/.exec(text.trim());
+      const m = /^(\d{1,3}):([0-5]?\d)$/.exec(String(text).trim());
       if (!m) throw new Error(`Invalid time "${text}", expected mm:ss.`);
       return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
     },
@@ -432,47 +628,10 @@
     }
   }
 
-  // ---------- Speech ----------
-
-  let selectedVoice = null;
-  function refreshVoices() {
-    const voices = speechSynthesis.getVoices();
-    const select = document.getElementById("voiceSelect");
-    const previous = select.value;
-    select.innerHTML = "";
-    voices
-      .filter((v) => v.lang.startsWith("en"))
-      .concat(voices.filter((v) => !v.lang.startsWith("en")))
-      .forEach((v, i) => {
-        const opt = document.createElement("option");
-        opt.value = v.name;
-        opt.textContent = `${v.name} (${v.lang})${v.localService ? "" : " · online"}`;
-        select.appendChild(opt);
-      });
-    if (previous && voices.some((v) => v.name === previous)) {
-      select.value = previous;
-    } else {
-      const localEnglish = voices.find((v) => v.lang.startsWith("en") && v.localService);
-      if (localEnglish) select.value = localEnglish.name;
-    }
-    selectedVoice = voices.find((v) => v.name === select.value) || null;
-  }
-  speechSynthesis.addEventListener("voiceschanged", refreshVoices);
-  refreshVoices();
-  document.getElementById("voiceSelect").addEventListener("change", (e) => {
-    selectedVoice = speechSynthesis.getVoices().find((v) => v.name === e.target.value) || null;
-  });
-
-  function speak(text) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    if (selectedVoice) utterance.voice = selectedVoice;
-    speechSynthesis.speak(utterance);
-  }
-
-  // ---------- App wiring ----------
+  // ---------- Sample build (loaded on first run only) ----------
 
   const SAMPLE_BUILD = {
-    name: "Zerg 2-Base Roach/Ravager",
+    name: "Zerg 2-Base Roach/Ravager (example)",
     matchup: "ZvT",
     defaultWarningSeconds: 10,
     events: [
@@ -489,6 +648,8 @@
     ],
   };
 
+  // ---------- DOM handles ----------
+
   const el = {
     buildName: document.getElementById("buildName"),
     clock: document.getElementById("clock"),
@@ -502,8 +663,31 @@
     pauseBtn: document.getElementById("pauseBtn"),
     resetBtn: document.getElementById("resetBtn"),
     warningInput: document.getElementById("warningInput"),
+    voiceSelect: document.getElementById("voiceSelect"),
     status: document.getElementById("status"),
+    buildNameInput: document.getElementById("buildNameInput"),
+    buildMatchupInput: document.getElementById("buildMatchupInput"),
+    newBuildBtn: document.getElementById("newBuildBtn"),
+    sourceList: document.getElementById("sourceList"),
+    addEventForm: document.getElementById("addEventForm"),
+    eventLabel: document.getElementById("eventLabel"),
+    eventRecurring: document.getElementById("eventRecurring"),
+    singleTimeRow: document.getElementById("singleTimeRow"),
+    recurringFields: document.getElementById("recurringFields"),
+    eventTime: document.getElementById("eventTime"),
+    eventStartTime: document.getElementById("eventStartTime"),
+    eventInterval: document.getElementById("eventInterval"),
+    eventEndTime: document.getElementById("eventEndTime"),
+    eventWarning: document.getElementById("eventWarning"),
+    exportBtn: document.getElementById("exportBtn"),
   };
+
+  function setStatus(message, isError) {
+    el.status.textContent = message || "";
+    el.status.classList.toggle("is-error", Boolean(isError));
+  }
+
+  // ---------- App state ----------
 
   const clock = new GameClock();
   let buildFile = null;
@@ -511,43 +695,108 @@
 
   function loadBuild(file, { persist } = { persist: true }) {
     const timeline = buildTimeline(file);
-    if (timeline.length === 0) throw new Error("Build order has no events.");
     buildFile = file;
     scheduler = new CueScheduler(timeline);
     clock.reset();
     el.buildName.textContent = file.matchup ? `${file.name} (${file.matchup})` : file.name;
     el.warningInput.value = file.defaultWarningSeconds ?? 10;
+    el.buildNameInput.value = file.name;
+    el.buildMatchupInput.value = file.matchup || "";
     if (persist) {
-      try { localStorage.setItem("sc2timer.lastBuild", JSON.stringify(file)); } catch (_) {}
+      try { localStorage.setItem("sc2timer.lastBuild", JSON.stringify(file)); } catch (_) { /* unavailable, e.g. private browsing */ }
     }
-    setStatus("");
+    renderSourceList();
     render();
     updateButtons();
   }
 
-  function setStatus(message, isError) {
-    el.status.textContent = message;
-    el.status.classList.toggle("is-error", Boolean(isError));
+  function renderSourceList() {
+    el.sourceList.innerHTML = "";
+    if (!buildFile || buildFile.events.length === 0) {
+      el.sourceList.innerHTML = '<li class="empty">No events yet — add one below.</li>';
+      return;
+    }
+    buildFile.events.forEach((dto, index) => {
+      const li = document.createElement("li");
+      const timeText = dto.recurring
+        ? `${dto.startTime} +${dto.intervalSeconds}s`
+        : (dto.time || "?");
+      const timeSpan = document.createElement("span");
+      timeSpan.className = "s-time";
+      timeSpan.textContent = timeText;
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "s-label";
+      labelSpan.textContent = dto.text;
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "s-remove";
+      removeBtn.textContent = "×";
+      removeBtn.setAttribute("aria-label", `Remove ${dto.text}`);
+      removeBtn.addEventListener("click", () => {
+        buildFile.events.splice(index, 1);
+        loadBuild(buildFile);
+      });
+      li.append(timeSpan, labelSpan, removeBtn);
+      el.sourceList.appendChild(li);
+    });
   }
 
-  el.importInput.addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-      if (!parsed.name) throw new Error("Build order is missing a 'name'.");
-      if (!Array.isArray(parsed.events) || parsed.events.length === 0) throw new Error("Build order has no events.");
-      loadBuild(parsed);
-    } catch (err) {
-      setStatus(`Couldn't load build order: ${err.message}`, true);
+  function render() {
+    const elapsed = clock.elapsed;
+    el.clock.textContent = GameTime.format(elapsed);
+
+    if (!scheduler || scheduler.events.length === 0) {
+      el.nextLabel.textContent = "—";
+      el.nextCountdown.textContent = "";
+      el.nextCard.classList.remove("is-imminent");
+      el.nextLabel.classList.remove("is-imminent");
+      el.timeline.innerHTML = '<li class="empty">No events yet — use Edit build order below.</li>';
+      return;
     }
-    e.target.value = "";
-  });
+
+    const nextIndex = scheduler.getNextIndex(elapsed);
+    const next = nextIndex === -1 ? null : scheduler.events[nextIndex];
+    const remaining = next ? Math.max(0, next.time - elapsed) : null;
+    const imminent = remaining !== null && remaining <= 5;
+
+    el.nextLabel.textContent = next ? next.label : "Build complete";
+    el.nextCountdown.textContent = next ? `in ${Math.ceil(remaining)}s` : "";
+    el.nextLabel.classList.toggle("is-imminent", imminent);
+    el.nextCard.classList.toggle("is-imminent", imminent);
+
+    el.timeline.innerHTML = "";
+    scheduler.events.forEach((ev, i) => {
+      const li = document.createElement("li");
+      const isCompleted = ev.time <= elapsed;
+      li.className = isCompleted ? "completed" : (i === nextIndex ? "next-up" : "");
+      const timeSpan = document.createElement("span");
+      timeSpan.className = "t-time";
+      timeSpan.textContent = GameTime.format(ev.time);
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "t-label";
+      labelSpan.textContent = ev.label;
+      li.append(timeSpan, labelSpan);
+      el.timeline.appendChild(li);
+    });
+
+    const activeItem = el.timeline.children[Math.max(0, nextIndex === -1 ? scheduler.events.length - 1 : nextIndex)];
+    activeItem?.scrollIntoView({ block: "center" });
+  }
+
+  function updateButtons() {
+    const hasEvents = Boolean(scheduler && scheduler.events.length > 0);
+    el.startBtn.disabled = !hasEvents || clock.state === "running";
+    el.pauseBtn.disabled = !hasEvents || clock.state !== "running";
+    el.resetBtn.disabled = !hasEvents || clock.state === "stopped";
+    el.clockState.textContent = clock.state[0].toUpperCase() + clock.state.slice(1);
+    el.clockState.classList.toggle("is-running", clock.state === "running");
+    el.clockState.classList.toggle("is-paused", clock.state === "paused");
+  }
+
+  // ---------- Transport controls (wired unconditionally, before speech setup) ----------
 
   el.startBtn.addEventListener("click", () => {
     clock.start();
-    speechSynthesis.resume();
     updateButtons();
   });
   el.pauseBtn.addEventListener("click", () => {
@@ -567,49 +816,151 @@
     }
   });
 
-  function updateButtons() {
-    const hasBuild = Boolean(scheduler);
-    el.startBtn.disabled = !hasBuild || clock.state === "running";
-    el.pauseBtn.disabled = !hasBuild || clock.state !== "running";
-    el.resetBtn.disabled = !hasBuild || clock.state === "stopped";
-    el.clockState.textContent = clock.state[0].toUpperCase() + clock.state.slice(1);
-    el.clockState.classList.toggle("is-running", clock.state === "running");
-    el.clockState.classList.toggle("is-paused", clock.state === "paused");
-  }
-
-  function render() {
-    const elapsed = clock.elapsed;
-    el.clock.textContent = GameTime.format(elapsed);
-
-    if (!scheduler) {
-      el.nextLabel.textContent = "—";
-      el.nextCountdown.textContent = "";
-      el.timeline.innerHTML = "";
-      return;
+  el.importInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if (!parsed.name) throw new Error("Build order is missing a 'name'.");
+      if (!Array.isArray(parsed.events)) throw new Error("Build order has no 'events' array.");
+      loadBuild(parsed);
+      setStatus(`Loaded "${parsed.name}".`);
+    } catch (err) {
+      setStatus(`Couldn't load build order: ${err.message}`, true);
     }
+    e.target.value = "";
+  });
 
-    const nextIndex = scheduler.getNextIndex(elapsed);
-    const next = nextIndex === -1 ? null : scheduler.events[nextIndex];
-    const remaining = next ? Math.max(0, next.time - elapsed) : null;
-    const imminent = remaining !== null && remaining <= 5;
+  // ---------- Build order editor ----------
 
-    el.nextLabel.textContent = next ? next.label : "Build complete";
-    el.nextCountdown.textContent = next ? `in ${Math.ceil(remaining)}s` : "";
-    el.nextLabel.classList.toggle("is-imminent", imminent);
-    el.nextCard.classList.toggle("is-imminent", imminent);
-
-    el.timeline.innerHTML = "";
-    scheduler.events.forEach((ev, i) => {
-      const li = document.createElement("li");
-      const isCompleted = ev.time <= elapsed;
-      li.className = isCompleted ? "completed" : (i === nextIndex ? "next-up" : "");
-      li.innerHTML = `<span class="t-time">${GameTime.format(ev.time)}</span><span class="t-label">${ev.label}</span>`;
-      el.timeline.appendChild(li);
+  el.newBuildBtn.addEventListener("click", () => {
+    const name = el.buildNameInput.value.trim() || "My Build";
+    loadBuild({
+      name,
+      matchup: el.buildMatchupInput.value.trim(),
+      defaultWarningSeconds: Number(el.warningInput.value) || 10,
+      events: [],
     });
+    setStatus(`Started "${name}". Add events below.`);
+  });
 
-    const activeItem = el.timeline.children[Math.max(0, nextIndex === -1 ? scheduler.events.length - 1 : nextIndex)];
-    activeItem?.scrollIntoView({ block: "center" });
+  el.eventRecurring.addEventListener("change", () => {
+    el.singleTimeRow.hidden = el.eventRecurring.checked;
+    el.recurringFields.hidden = !el.eventRecurring.checked;
+  });
+
+  el.addEventForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!buildFile) {
+      loadBuild({ name: "My Build", matchup: "", defaultWarningSeconds: Number(el.warningInput.value) || 10, events: [] });
+    }
+    try {
+      const label = el.eventLabel.value.trim();
+      if (!label) throw new Error("Give the event a name.");
+
+      const warningRaw = el.eventWarning.value.trim();
+      const dto = { text: label };
+      if (warningRaw !== "") dto.warningSeconds = Number(warningRaw);
+
+      if (el.eventRecurring.checked) {
+        GameTime.parse(el.eventStartTime.value);
+        if (!el.eventInterval.value || Number(el.eventInterval.value) <= 0) throw new Error("Enter a positive repeat interval in seconds.");
+        dto.recurring = true;
+        dto.startTime = el.eventStartTime.value.trim();
+        dto.intervalSeconds = Number(el.eventInterval.value);
+        if (el.eventEndTime.value.trim()) {
+          GameTime.parse(el.eventEndTime.value);
+          dto.endTime = el.eventEndTime.value.trim();
+        }
+      } else {
+        GameTime.parse(el.eventTime.value);
+        dto.time = el.eventTime.value.trim();
+      }
+
+      buildFile.events.push(dto);
+      loadBuild(buildFile);
+      setStatus(`Added "${label}".`);
+      el.addEventForm.reset();
+      el.singleTimeRow.hidden = false;
+      el.recurringFields.hidden = true;
+    } catch (err) {
+      setStatus(err.message, true);
+    }
+  });
+
+  el.exportBtn.addEventListener("click", () => {
+    if (!buildFile) return;
+    try {
+      const blob = new Blob([JSON.stringify(buildFile, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(buildFile.name || "build-order").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setStatus(`Couldn't export: ${err.message}. Downloads only work when this file is open directly in a browser tab.`, true);
+    }
+  });
+
+  // ---------- Speech (guarded: the rest of the app must work even if this is unavailable) ----------
+
+  const speechSupported = typeof window.speechSynthesis !== "undefined" && typeof SpeechSynthesisUtterance !== "undefined";
+  let selectedVoice = null;
+
+  function speak(text) {
+    if (!speechSupported) return;
+    try {
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (selectedVoice) utterance.voice = selectedVoice;
+      speechSynthesis.speak(utterance);
+    } catch (_) { /* best-effort */ }
   }
+
+  if (speechSupported) {
+    try {
+      const refreshVoices = () => {
+        const voices = speechSynthesis.getVoices();
+        const previous = el.voiceSelect.value;
+        el.voiceSelect.innerHTML = "";
+        voices
+          .filter((v) => v.lang.startsWith("en"))
+          .concat(voices.filter((v) => !v.lang.startsWith("en")))
+          .forEach((v) => {
+            const opt = document.createElement("option");
+            opt.value = v.name;
+            opt.textContent = `${v.name} (${v.lang})${v.localService ? "" : " · online"}`;
+            el.voiceSelect.appendChild(opt);
+          });
+        if (previous && voices.some((v) => v.name === previous)) {
+          el.voiceSelect.value = previous;
+        } else {
+          const localEnglish = voices.find((v) => v.lang.startsWith("en") && v.localService);
+          if (localEnglish) el.voiceSelect.value = localEnglish.name;
+        }
+        selectedVoice = voices.find((v) => v.name === el.voiceSelect.value) || null;
+      };
+      speechSynthesis.addEventListener("voiceschanged", refreshVoices);
+      refreshVoices();
+      el.voiceSelect.addEventListener("change", (e) => {
+        selectedVoice = speechSynthesis.getVoices().find((v) => v.name === e.target.value) || null;
+      });
+      el.startBtn.addEventListener("click", () => {
+        try { speechSynthesis.resume(); } catch (_) { /* ignore */ }
+      });
+    } catch (err) {
+      setStatus("Voice list unavailable, but speech may still work.", false);
+    }
+  } else {
+    el.voiceSelect.innerHTML = '<option>Not supported in this browser</option>';
+    el.voiceSelect.disabled = true;
+    setStatus("This browser/context doesn't expose text-to-speech, so cues will be silent. Try opening this file directly in Chrome or Edge.", true);
+  }
+
+  // ---------- Tick loop ----------
 
   function tick() {
     if (scheduler && clock.state === "running") {
@@ -624,17 +975,24 @@
   // ---------- Startup ----------
 
   let initial = SAMPLE_BUILD;
+  let loadedFromStorage = false;
   try {
     const saved = localStorage.getItem("sc2timer.lastBuild");
-    if (saved) initial = JSON.parse(saved);
-  } catch (_) {}
+    if (saved) {
+      initial = JSON.parse(saved);
+      loadedFromStorage = true;
+    }
+  } catch (_) { /* localStorage unavailable */ }
 
   try {
     loadBuild(initial, { persist: false });
-    if (initial === SAMPLE_BUILD) setStatus("Loaded sample build. Import your own JSON any time.");
+    if (!loadedFromStorage) setStatus('Loaded a sample build. Click "Edit build order" to add your own events, or Import a JSON file.');
   } catch (err) {
     setStatus(`Couldn't load saved build: ${err.message}`, true);
+    loadBuild({ name: "My Build", matchup: "", defaultWarningSeconds: 10, events: [] }, { persist: false });
   }
 
-  tick();
+  requestAnimationFrame(tick);
 </script>
+</body>
+</html>

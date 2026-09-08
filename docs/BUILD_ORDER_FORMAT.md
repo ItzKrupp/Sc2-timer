@@ -1,5 +1,11 @@
 # Build order file format
 
+Works for any race — the format itself has no idea what a Zerg is. It's just
+a name and a list of timed cues; whether those cues say "Inject", "MULE", or
+"Chrono boost" is entirely up to what you put in `text`. You can write one by
+hand, generate one with an AI assistant, or build one straight in the app's
+**Edit build order** panel (no JSON required at all).
+
 A build order is a JSON file with this shape:
 
 ```jsonc
@@ -51,11 +57,20 @@ Times are always `"mm:ss"` (e.g. `"04:20"`, not `"4:20"` or `260`).
 
 Paste this prompt (edit the build description) into any chat AI:
 
-> Create a StarCraft 2 build order for [describe the build, e.g. "Zerg 2-base
-> Roach Ravager all-in vs Terran"]. Output it as JSON matching this schema:
-> [paste the contents of this file, or the `zerg-2base-roach-ravager.json`
-> sample]. Only include major milestones — tech buildings, upgrades,
-> expansions, and a recurring "Inject" entry for larva injects. Don't include
-> every single unit or supply block.
+> Create a StarCraft 2 build order for [describe the build and race, e.g.
+> "Protoss 4-gate blink stalker vs Terran" or "Terran 2-base bio vs Zerg"].
+> Output it as JSON matching this schema: [paste the contents of this file,
+> or one of the `samples/*.json` files]. Only include major milestones —
+> tech buildings, upgrades, expansions, and a recurring entry for whatever
+> this race's repeating action is (larva injects for Zerg, MULEs for Terran,
+> chrono boost for Protoss). Don't include every single unit or supply block.
 
-Save the AI's output as a `.json` file and use **Import** in the app to load it.
+Save the AI's output as a `.json` file and use **Import** in the app to load
+it — or skip this entirely and build the order by hand in the app's **Edit
+build order** panel.
+
+## Sample builds
+
+- `samples/zerg-2base-roach-ravager.json` — Zerg, ZvT
+- `samples/terran-2base-bio.json` — Terran, TvZ
+- `samples/protoss-blink-stalker.json` — Protoss, PvT

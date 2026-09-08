@@ -1,0 +1,23 @@
+{
+  "name": "Protoss Blink Stalker",
+  "matchup": "PvT",
+  "defaultWarningSeconds": 10,
+  "events": [
+    { "time": "00:16", "text": "First pylon" },
+    { "time": "01:10", "text": "Gateway" },
+    { "time": "02:00", "text": "Cybernetics core" },
+    { "time": "02:40", "text": "Second gateway, warp gate research" },
+    { "time": "03:10", "text": "Natural nexus" },
+    { "time": "03:40", "text": "Twilight council" },
+    { "time": "04:20", "text": "Start blink" },
+    { "time": "05:00", "text": "Robotics facility" },
+    {
+      "recurring": true,
+      "text": "Chrono boost",
+      "startTime": "00:30",
+      "intervalSeconds": 40,
+      "endTime": "10:00",
+      "warningSeconds": 0
+    }
+  ]
+}

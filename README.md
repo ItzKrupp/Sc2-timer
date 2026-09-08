@@ -1,8 +1,9 @@
-# SC2 Zerg Build Timer
+# SC2 Build Timer
 
-An audio-based build-order timer for StarCraft 2 Zerg players. Import a build
-order, press Start when the game begins, and it calls out timings ("Start
-Lair", "Inject", "Third hatchery"...) so you can keep your eyes on the game.
+An audio-based build-order timer for StarCraft 2, for any race. Set up (or
+import) a build order, press Start when the game begins, and it calls out
+timings ("Start Lair", "Inject", "MULE", "Chrono boost"...) so you can keep
+your eyes on the game.
 
 There are two versions in this repo:
 
@@ -21,12 +22,19 @@ no API key, no account, and no network access needed once the page is open.
 Voices come from your OS/browser, same as the .NET version's approach but
 with zero build step.
 
-Just open `web/index.html` in a browser. It loads with a sample 2-base
-Roach/Ravager build already in — click **Import** to load your own JSON
-build order (same format as the .NET version, see
-`docs/BUILD_ORDER_FORMAT.md`), then **Start**. Your last-imported build is
-remembered (browser local storage) so it's still there next time you open
-the file.
+Just open `web/index.html` in a browser. It's not Zerg-specific — the JSON
+format is just timestamps and labels, so it works equally well for Terran
+MULEs or Protoss chrono boost (see `samples/` for one example per race).
+
+**You don't need to prepare a JSON file to use it.** The page opens with a
+click-through **Edit build order** panel: give your build a name, then add
+events one at a time (a time, a label, and optionally "repeats every N
+seconds" for things like injects/MULEs/chrono). Or click **Import** to load
+a JSON file — one you wrote by hand, or one an AI assistant generated for
+you (see `docs/BUILD_ORDER_FORMAT.md`). Whatever's currently loaded is saved
+automatically (browser local storage) so it's still there next time you open
+the file, and **Download as JSON** lets you save a build you built in the
+editor for reuse or sharing.
 
 ## Why the .NET/WPF version uses this stack
 
